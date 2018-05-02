@@ -1,11 +1,12 @@
 // Author: Mohamed Rahaman
-// Date: April 28, 2018
+// Date: May 2, 2018
 // Email: nabilrahaman501@gmail.com
 
 /******************************* Global Variables *******************************/
 var officePhoneNumber = ''; // NE SI Office Phone Number
-var supervisorName = '';
+var supervisorName = ''; 	// Name of current SI supervisor
 var supervisorEmail = '';   // The person recieving the cancellation request. Only use a TCCD email.
+var responesFolderID = '';	// Where the responses will be stored.
 
 /*
     This were information about the
@@ -36,10 +37,7 @@ var learningCenter = {
   url:'https://www.tccd.edu/academics/academic-help/labs-tutoring/#ne'
 };
 
-
 /******************************* DO NOT EDIT THE DOCUEMENT BELOW THIS LINE *******************************/
-
-// Functions:
 
 // On form summation get the data from sheets and create a document
 function onFormSubmit(e) {
@@ -78,7 +76,7 @@ function onFormSubmit(e) {
     // Main Call
     try
     {
-        if (leader.info.moreThanOne == 'Yes')
+        if (leader.info.moreThanOne == 'Yes' || leader.info.moreThanOne == 'yes')
         {
             sendExtendedEmail = true;
             docId = createDocument(leader,sendExtendedEmail);
@@ -89,16 +87,17 @@ function onFormSubmit(e) {
             sendExtendedEmail = false;
             docId = createDocument(leader,sendExtendedEmail);
         }
-    } catch(err) {
-    Logger.log(err + "\n");
+    } catch(err)
+    {
+        Logger.log(err + "\n");
     }
 }
 
 // Create the Document in
 function createDocument(leader, sendExtendedEmail)
 {
-    var docDate = getDate();
-    var doc = DocumentApp.create(docDate + ' SI Session Cancelation For ' + leader.info.fName + " " + leader.info.lName);
+    var fileName = getDate() + ' SI Session Cancelation For ' + leader.info.fName + " " + leader.info.lName;
+    var doc = DocumentApp.create(fileName);
     var docId = doc.getId();
     var docUrl = doc.getUrl();
     var header = doc.addHeader();
@@ -108,19 +107,21 @@ function createDocument(leader, sendExtendedEmail)
     var headerStyle1 ={};
         headerStyle1[DocumentApp.Attribute.FONT_SIZE] = 12;
         headerStyle1[DocumentApp.Attribute.BOLD] = true;
-    var headerText = header.getParent().getChild(1).asText().setText("\t\t\t\t\t\t\t\t\t\t\t" + leader.one.rmNum);
-    headerText.setAttributes(headerStyle1);
+    var headerText = header.getParent().getChild(1).asText()
+                           .setText("\t\t\t\t\t\t\t\t\t\t\t" + leader.one.rmNum)
+                           .setAttributes(headerStyle1);
 
     // Body Section 1: Leader's Session to Cancel
     var bodyStyle = {};
     bodyStyle[DocumentApp.Attribute.FONT_SIZE] = 30;
     bodyStyle[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.CENTER;
-
     var bodyText = body.appendParagraph(leader.info.fName + " " + leader.info.lName + "\'s"
                                    + "\nSI Session for " + leader.info.subj
                                    + "\nat " + leader.one.sTime
                                    + "\nis CANCELED"
-                                   + "\n" + leader.one.cDate).setHeading(DocumentApp.ParagraphHeading.HEADING1);
+                                   + "\n"
+                                   + Utilities.formatDate(new Date(leader.one.cDate), 'CST', 'MMMMMMMMM dd, YYYY'))
+                                   .setHeading(DocumentApp.ParagraphHeading.HEADING1);
     bodyText.setAttributes(bodyStyle);
 
     // Get User subject
@@ -143,48 +144,48 @@ function createDocument(leader, sendExtendedEmail)
         }
     }
 
-    // Body
-    var bodyStyle2 = {};
-    bodyStyle2[DocumentApp.Attribute.FONT_SIZE] = 18;
-    bodyStyle2[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.CENTER;
-
-    // Footer
-    var footerStyle1 = {};
-        footerStyle1[DocumentApp.Attribute.FONT_SIZE] = 16;
-        footerStyle1[DocumentApp.Attribute.BOLD] = true;
-        footerStyle1[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.RIGHT;
-    var footerStyle2 = {};
-        footerStyle2[DocumentApp.Attribute.FONT_SIZE] = 12;
-        footerStyle2[DocumentApp.Attribute.BOLD] = false;
-        footerStyle2[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.RIGHT;
-
     // Body Section 2: Learning Centers
+    var bodyStyle2 = {}; // Setting the body style
+	    bodyStyle2[DocumentApp.Attribute.FONT_SIZE] = 18;
+	    bodyStyle2[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.CENTER;
     var bodyText2;
-    var footerText1;
     if(learningCenter.science.status)
     {
-        bodyText2 = body.appendParagraph( "\n\n" + learningCenter.science.details + "\n" + learningCenter.url + "\n\n\n\n");
+       bodyText2 = body.appendParagraph( "\n\n" + learningCenter.science.details
+                                          + "\n" + learningCenter.url + "\n\n\n\n");
     }
     else if (learningCenter.mathPhys.status)
     {
-        bodyText2 = body.appendParagraph( "\n\n" + learningCenter.mathPhys.details + "\n" + learningCenter.url + "\n\n\n");
+       bodyText2 = body.appendParagraph( "\n\n" + learningCenter.mathPhys.details
+                                          + "\n" + learningCenter.url + "\n\n\n");
     }
     else
     {
-        bodyText2 = body.appendParagraph( "\n\n" + learningCenter.url).setLinkUrl(learningCenter.url);
-        body.appendParagraph("\n\n\n\n");
+       bodyText2 = body.appendParagraph( "\n\n" + learningCenter.url)
+                       .setLinkUrl(learningCenter.url);
+       body.appendParagraph("\n\n\n\n");
     }
     bodyText2.setAttributes(bodyStyle2);
 
-    // Footer Section:
-    footerText1 = body.appendParagraph("Sorry for any inconvenience.");
-    footerText1.setAttributes(footerStyle2);
-    footerText2 = body.appendParagraph("NE Supplemental Instruction Office\n" + officePhoneNumber);
-    footerText2.setAttributes(footerStyle1);
+    // Footer Section: Message and Office Number
+    var footerStyle1 = {};
+	    footerStyle1[DocumentApp.Attribute.FONT_SIZE] = 12;
+	    footerStyle1[DocumentApp.Attribute.BOLD] = false;
+	    footerStyle1[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.RIGHT;
+    var footerStyle2 = {};
+	    footerStyle2[DocumentApp.Attribute.FONT_SIZE] = 16;
+	    footerStyle2[DocumentApp.Attribute.BOLD] = true;
+	    footerStyle2[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.RIGHT;
+    body.appendParagraph("Sorry for any inconvenience.").setAttributes(footerStyle1);
+    body.appendParagraph("NE Supplemental Instruction Office\n" + officePhoneNumber).setAttributes(footerStyle2);
 
     // Save and Close the document
     doc.saveAndClose();
 
+    // Move the document to Responses Location
+    move(docId, responesFolderID);
+
+    // Either Send Normal Email or Send extended Email
     if(sendExtendedEmail)
     {
         Logger.log('Extended Email Sent');
@@ -192,7 +193,7 @@ function createDocument(leader, sendExtendedEmail)
     }
     else
     {
-        var emailSubject = docDate + 'Cancellation Request for ' + leader.info.fName + " " + leader.info.lName;
+        var emailSubject = getDate() + 'Cancellation Request for ' + leader.info.fName + " " + leader.info.lName;
         var emailBody =
                       "\nHello " + supervisorName + ",\n\n"
                       + leader.info.fName + ' ' + leader.info.lName + " has made a cancellation request.\n\n"
@@ -211,6 +212,7 @@ function createDocument(leader, sendExtendedEmail)
   return docId;
 }
 
+// Send the extend cancellation email
 function sendExtendCancellation(leader, docId)
 {
     var doc = DocumentApp.openById(docId);
@@ -236,6 +238,22 @@ function sendExtendCancellation(leader, docId)
                      {attachments: [doc.getAs(MimeType.PDF)],name:'Automated Cancellation Request',noReply:true });
 }
 
+// Moves the document from the root of google drive to the responses folder
+function move(source, dest)
+{
+  var file = DriveApp.getFileById(source);
+  var parents = file.getParents();
+
+  while (parents.hasNext())
+  {
+    var parent = parents.next();
+    parent.removeFile(file);
+  }
+
+  DriveApp.getFolderById(dest).addFile(file);
+}
+
+// Gets formatted date
 function getDate()
 {
     return Utilities.formatDate(new Date(), 'CST', 'MM-dd-yyyy - hh:mm:ss - ');
