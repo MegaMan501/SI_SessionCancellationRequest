@@ -118,7 +118,7 @@ function createDocument(leader, sendExtendedEmail)
     var bodyText = body.appendParagraph(leader.info.fName + " " + leader.info.lName + "\'s"
                                    + "\nSI Session for " + leader.info.subj
                                    + "\nat " + leader.one.sTime
-                                   + "\nis CANCELED"
+                                   + "\nis CANCELED for"
                                    + "\n"
                                    + Utilities.formatDate(new Date(leader.one.cDate), 'CST', 'MMMMMMMMM dd, YYYY'))
                                    .setHeading(DocumentApp.ParagraphHeading.HEADING1);
