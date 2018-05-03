@@ -6,6 +6,7 @@
 var officePhoneNumber = ''; // NE SI Office Phone Number
 var supervisorName = ''; 	// Name of current SI supervisor
 var supervisorEmail = '';   // The person recieving the cancellation request. Only use a TCCD email.
+var ccEmails = ''; 			// A comma-separated list of email addresses to CC. 
 var responesFolderID = '';	// Where the responses will be stored.
 
 /*
@@ -206,7 +207,7 @@ function createDocument(leader, sendExtendedEmail)
                       + "\nGoogle Docs URL: " +  docUrl
                       + "\n\n";
         GmailApp.sendEmail(supervisorEmail, emailSubject, emailBody,
-                           {attachments: [doc.getAs(MimeType.PDF)],name: 'Automated Cancellation Request',noReply:true });
+                           {attachments: [doc.getAs(MimeType.PDF)],name: 'Automated Cancellation Request',cc:ccEmails,noReply:true });
   }
 
   return docId;
@@ -235,7 +236,7 @@ function sendExtendCancellation(leader, docId)
 
     doc.saveAndClose();
     GmailApp.sendEmail(supervisorEmail, subject, body,
-                     {attachments: [doc.getAs(MimeType.PDF)],name:'Automated Cancellation Request',noReply:true });
+                     {attachments: [doc.getAs(MimeType.PDF)],name:'Automated Cancellation Request',cc:ccEmails,noReply:true });
 }
 
 // Moves the document from the root of google drive to the responses folder
